@@ -1,0 +1,140 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sync-mcp-cfg"
+version = "0.1.0"
+description = "A tool to manage and sync MCP Server configurations across multiple AI clients"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Sync MCP Config Team", email = "noreply@users.noreply.github.com" }
+]
+maintainers = [
+    { name = "Sync MCP Config Team", email = "noreply@users.noreply.github.com" }
+]
+keywords = ["mcp", "model-context-protocol", "ai", "claude", "cursor", "vscode", "copilot"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development",
+    "Topic :: Utilities",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "click>=8.0.0",
+    "rich>=13.0.0",
+    "textual>=0.41.0",
+    "pydantic>=2.0.0",
+    "platformdirs>=3.0.0",
+    "tomlkit>=0.12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocs-click>=0.8.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/jgrichardson/sync-mcp-cfg"
+Repository = "https://github.com/jgrichardson/sync-mcp-cfg"
+Issues = "https://github.com/jgrichardson/sync-mcp-cfg/issues"
+Documentation = "https://github.com/jgrichardson/sync-mcp-cfg#readme"
+
+[project.scripts]
+sync-mcp-cfg = "sync_mcp_cfg.cli.main:main"
+smc = "sync_mcp_cfg.cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sync_mcp_cfg"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/docs",
+    "/README.md",
+    "/LICENSE",
+]
+
+[tool.black]
+target-version = ["py39"]
+line-length = 88
+skip-string-normalization = true
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.9"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101", "B601"]
