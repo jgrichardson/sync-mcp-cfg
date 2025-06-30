@@ -7,7 +7,7 @@ A powerful tool to manage and synchronize Model Context Protocol (MCP) server co
 
 ## 🚀 Features
 
-- **Multi-Client Support**: Manage MCP servers across Claude Code, Claude Desktop, Cursor, and VS Code
+- **Multi-Client Support**: Manage MCP servers across Claude Code, Claude Desktop, Cursor, VS Code, and **Gemini CLI**
 - **Easy Synchronization**: Sync server configurations between different clients with conflict resolution
 - **Backup & Restore**: Automatic backups before changes with restore capability
 - **Interactive CLI**: User-friendly command-line interface with rich output and progress indicators
@@ -15,13 +15,15 @@ A powerful tool to manage and synchronize Model Context Protocol (MCP) server co
 - **Cross-Platform**: Works on Windows, macOS, and Linux
 - **Extensible**: Plugin-based architecture for easy addition of new clients
 - **Safe Operations**: Built-in validation and dry-run capabilities
+- **Security Hardened**: Protected against accidental exposure of sensitive data
+- **Auto-Detection**: Automatically discovers client configurations in standard locations
 
 ## 📦 Installation
 
 ### From Source (Current Method)
 
 ```bash
-git clone https://github.com/jgrichardson/sync-mcp-cfg.git
+git clone https://github.com/gilberth/sync-mcp-cfg.git
 cd sync-mcp-cfg
 pip install -e .
 ```
@@ -31,12 +33,12 @@ pip install -e .
 ### Requirements
 
 - Python 3.9 or higher
-- One or more supported MCP clients installed (Claude Code, Claude Desktop, Cursor, or VS Code)
+- One or more supported MCP clients installed (Claude Code, Claude Desktop, Cursor, VS Code, or Gemini CLI)
 
 ### Development Installation
 
 ```bash
-git clone https://github.com/jgrichardson/sync-mcp-cfg.git
+git clone https://github.com/gilberth/sync-mcp-cfg.git
 cd sync-mcp-cfg
 pip install -e ".[dev]"
 ```
@@ -46,9 +48,40 @@ pip install -e ".[dev]"
 | Client | Status | Configuration Location |
 |--------|--------|------------------------|
 | **Claude Code CLI** | ✅ | `~/.claude.json` |
-| **Claude Desktop** | ✅ | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)<br>`%APPDATA%/Claude/claude_desktop_config.json` (Windows) |
+| **Claude Desktop** | ✅ | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)<br>`%APPDATA%/Claude/claude_desktop_config.json` (Windows)<br>`~/.config/Claude/claude_desktop_config.json` (Linux) |
 | **Cursor** | ✅ | `~/.cursor/mcp.json` |
-| **VS Code Copilot** | ✅ | `.vscode/mcp.json` |
+| **VS Code Copilot** | ✅ | `~/Library/Application Support/Code/User/settings.json` (macOS)<br>`%APPDATA%/Code/User/settings.json` (Windows)<br>`~/.config/Code/User/settings.json` (Linux) |
+| **Gemini CLI** | ✅ | `~/.gemini/settings.json` (global)<br>`.gemini/settings.json` (local) |
+
+## 🌟 Gemini CLI Support
+
+This tool now includes **complete support for Gemini CLI** with all its specific features:
+
+### Key Features
+- **Auto-detection**: Automatically finds Gemini CLI configuration in global (`~/.gemini/settings.json`) or local (`.gemini/settings.json`) locations
+- **Trust control**: Supports the `trust` field for automatic tool execution approval
+- **Working directory**: Supports `cwd` field for stdio servers
+- **Timeout configuration**: Configurable timeout values (default: 600,000ms)
+- **HTTP URLs**: Special support for `httpUrl` field for HTTP servers (different from SSE `url`)
+- **Integrated settings**: Manages MCP servers as part of Gemini CLI's main settings.json
+
+### Gemini CLI Specific Examples
+
+```bash
+# List only Gemini CLI servers
+sync-mcp-cfg list --client gemini-cli
+
+# Sync from Claude Desktop to Gemini CLI with backup
+sync-mcp-cfg sync --from claude-desktop --to gemini-cli --backup
+
+# Add server specifically for Gemini CLI
+sync-mcp-cfg add gemini-fs npx \
+  -a "-y" -a "@modelcontextprotocol/server-filesystem" -a "/tmp" \
+  --clients gemini-cli \
+  --description "Filesystem server for Gemini CLI"
+```
+
+For complete Gemini CLI documentation, see: [docs/gemini-cli-example.md](docs/gemini-cli-example.md)
 
 ## 🚀 Quick Start
 
@@ -79,6 +112,14 @@ sync-mcp-cfg add weather-api node \
   --args "/path/to/weather-server.js" \
   --env "API_KEY=your-key-here" \
   --description "Weather information server"
+
+# Add Gemini CLI specific server with trust and timeout
+sync-mcp-cfg add gemini-server npx \
+  --args "-y" \
+  --args "@modelcontextprotocol/server-filesystem" \
+  --args "/tmp" \
+  --clients gemini-cli \
+  --description "Filesystem server for Gemini CLI"
 ```
 
 ### 4. List Configured Servers
@@ -100,12 +141,15 @@ sync-mcp-cfg list --detailed
 # Sync all servers from Claude Code to Cursor
 sync-mcp-cfg sync --from claude-code --to cursor
 
+# Sync between multiple clients including Gemini CLI
+sync-mcp-cfg sync --from claude-desktop --to gemini-cli --backup
+
 # Sync specific servers
-sync-mcp-cfg sync --from claude-desktop --to claude-code --to vscode \
+sync-mcp-cfg sync --from claude-desktop --to claude-code --to vscode --to gemini-cli \
   --servers filesystem --servers weather-api
 
 # Dry run to see what would be synced
-sync-mcp-cfg sync --from cursor --dry-run
+sync-mcp-cfg sync --from cursor --to gemini-cli --dry-run
 ```
 
 ### 6. Remove Servers
@@ -140,19 +184,28 @@ sync-mcp-cfg add github npx \
 sync-mcp-cfg add brave-search npx \
   -a "-y" -a "@modelcontextprotocol/server-brave-search" \
   -e "BRAVE_API_KEY=your-key"
+
+# Gemini CLI specific server with trust and timeout settings
+sync-mcp-cfg add gemini-filesystem npx \
+  -a "-y" -a "@modelcontextprotocol/server-filesystem" -a "/path/to/files" \
+  --clients gemini-cli \
+  --description "Trusted filesystem server for Gemini CLI"
 ```
 
 ### Batch Operations
 
 ```bash
-# Sync all servers from one client to multiple others
-sync-mcp-cfg sync --from claude-desktop --to claude-code --to cursor --to vscode
+# Sync all servers from one client to multiple others including Gemini CLI
+sync-mcp-cfg sync --from claude-desktop --to claude-code --to cursor --to vscode --to gemini-cli
 
 # List servers in JSON format for scripting
 sync-mcp-cfg list --format json > mcp-servers.json
 
 # Add server to all available clients
 sync-mcp-cfg add universal-server npx -a "-y" -a "some-mcp-server"
+
+# Sync with backup and overwrite protection for Gemini CLI
+sync-mcp-cfg sync --from vscode --to gemini-cli --backup --overwrite
 ```
 
 ## 🎨 Text-based UI
@@ -210,7 +263,8 @@ sync-mcp-cfg restore --client claude-code --backup /path/to/backup.json
 - **Claude Code**: `~/.claude/backups/`
 - **Claude Desktop**: `~/Library/Application Support/Claude/backups/` (macOS)
 - **Cursor**: `~/.cursor/backups/`
-- **VS Code**: `.vscode/backups/`
+- **VS Code**: Global settings backup with the settings.json file
+- **Gemini CLI**: `~/.gemini/backups/` (global) or `.gemini/backups/` (local)
 
 ## 🔌 Extending Support
 
@@ -281,7 +335,7 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 ### Development Setup
 
 ```bash
-git clone https://github.com/jgrichardson/sync-mcp-cfg.git
+git clone https://github.com/gilberth/sync-mcp-cfg.git
 cd sync-mcp-cfg
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -311,6 +365,17 @@ For detailed command help:
 ```bash
 sync-mcp-cfg COMMAND --help
 ```
+
+## 🔒 Security & Privacy
+
+This tool is designed with security in mind:
+
+- **No sensitive data collection**: Personal credentials, API keys, and private paths are never included in the codebase
+- **Sanitized examples**: All documentation uses generic, non-personal example data
+- **Protected .gitignore**: Comprehensive exclusion patterns prevent accidental exposure of sensitive configuration files
+- **Backup safety**: Automatic backups are stored locally and never transmitted
+
+For complete security guidelines, see: [SECURITY.md](SECURITY.md)
 
 ## 🐛 Troubleshooting
 
@@ -346,11 +411,32 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 🐛 [Report Bugs](https://github.com/jgrichardson/sync-mcp-cfg/issues)
-- 💡 [Request Features](https://github.com/jgrichardson/sync-mcp-cfg/issues)
-- 📖 [Documentation](https://github.com/jgrichardson/sync-mcp-cfg/wiki)
-- 💬 [Discussions](https://github.com/jgrichardson/sync-mcp-cfg/discussions)
+- 🐛 [Report Bugs](https://github.com/gilberth/sync-mcp-cfg/issues)
+- 💡 [Request Features](https://github.com/gilberth/sync-mcp-cfg/issues)
+- 📖 [Documentation](https://github.com/gilberth/sync-mcp-cfg/wiki)
+- 💬 [Discussions](https://github.com/gilberth/sync-mcp-cfg/discussions)
 
 ---
+
+## 🆕 Recent Updates
+
+### v0.1.0 - Latest Release
+
+**🎉 Major Features Added:**
+
+- ✅ **Complete Gemini CLI Support**: Full integration with auto-detection, trust control, and timeout configuration
+- ✅ **Enhanced VSCode Support**: Now uses global settings.json for proper MCP configuration
+- ✅ **Security Hardening**: Protected against accidental exposure of sensitive data with comprehensive .gitignore
+- ✅ **Cross-Client Synchronization**: Seamless MCP server sharing between all supported clients
+- ✅ **Comprehensive Testing**: Full test coverage for all new features
+- ✅ **Rich Documentation**: Detailed examples and usage guides for all clients
+
+**🔧 Technical Improvements:**
+
+- Plugin-based architecture with easy extensibility
+- Automatic backup creation before all destructive operations
+- Enhanced error handling and validation
+- Improved client auto-detection across all platforms
+- Support for client-specific configuration fields (trust, cwd, timeout, httpUrl)
 
 **Made with ❤️ for the AI development community**
