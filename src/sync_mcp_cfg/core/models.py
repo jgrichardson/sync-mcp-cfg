@@ -7,7 +7,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, model_validator
 
 
 class MCPServerType(str, Enum):
@@ -43,16 +43,16 @@ class MCPServer(BaseModel):
         
         return v.strip()
     
-    @validator('url')
-    def validate_url(cls, v, values):
-        """Validate URL is provided for SSE/HTTP servers."""
-        server_type = values.get('server_type')
-        if server_type in (MCPServerType.SSE, MCPServerType.HTTP) and not v:
-            raise ValueError(f"URL is required for {server_type} servers")
-        return v
+    @model_validator(mode='after')
+    def validate_server_config(self):
+        """Validate server configuration consistency."""
+        if self.server_type in (MCPServerType.SSE, MCPServerType.HTTP) and not self.url:
+            raise ValueError(f"URL is required for {self.server_type} servers")
+        
+        return self
     
     def __str__(self) -> str:
-        return f"{self.name} ({self.server_type})"
+        return f"{self.name} ({self.server_type.value})"
 
 
 class ClientType(str, Enum):
@@ -62,6 +62,7 @@ class ClientType(str, Enum):
     CLAUDE_DESKTOP = "claude-desktop"
     CURSOR = "cursor"
     VSCODE = "vscode"
+    GEMINI_CLI = "gemini-cli"
 
 
 class ClientConfig(BaseModel):

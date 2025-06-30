@@ -95,6 +95,7 @@ class TestClientType:
             "claude-desktop", 
             "cursor",
             "vscode",
+            "gemini-cli",
         }
         
         actual_types = {ct.value for ct in ClientType}

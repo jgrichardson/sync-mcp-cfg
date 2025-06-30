@@ -8,6 +8,7 @@ from .claude_code import ClaudeCodeHandler
 from .claude_desktop import ClaudeDesktopHandler
 from .cursor import CursorHandler
 from .vscode import VSCodeHandler
+from .gemini_cli import GeminiCLIHandler
 
 # Registry of client handlers
 CLIENT_HANDLERS: Dict[ClientType, Type[BaseClientHandler]] = {
@@ -15,6 +16,7 @@ CLIENT_HANDLERS: Dict[ClientType, Type[BaseClientHandler]] = {
     ClientType.CLAUDE_DESKTOP: ClaudeDesktopHandler,
     ClientType.CURSOR: CursorHandler,
     ClientType.VSCODE: VSCodeHandler,
+    ClientType.GEMINI_CLI: GeminiCLIHandler,
 }
 
 
@@ -31,6 +33,7 @@ __all__ = [
     "ClaudeDesktopHandler", 
     "CursorHandler",
     "VSCodeHandler",
+    "GeminiCLIHandler",
     "CLIENT_HANDLERS",
     "get_client_handler",
 ]

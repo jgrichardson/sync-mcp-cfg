@@ -37,6 +37,8 @@ class ClientRegistry:
             return self._discover_cursor(system)
         elif client_type == ClientType.VSCODE:
             return self._discover_vscode()
+        elif client_type == ClientType.GEMINI_CLI:
+            return self._discover_gemini_cli()
         
         return None
     
@@ -134,21 +136,54 @@ class ClientRegistry:
     
     def _discover_vscode(self) -> Optional[ClientConfig]:
         """Discover VS Code configuration."""
-        # VS Code uses workspace-specific config, so we'll use a default location
-        # Users can specify workspace-specific configs when needed
-        config_path = Path.cwd() / ".vscode" / "mcp.json"
+        system = platform.system().lower()
         
-        # Check if VS Code is available by looking for the command
+        # VS Code Copilot uses the global settings.json file for MCP configuration
+        if system == "darwin":  # macOS
+            config_path = Path.home() / "Library" / "Application Support" / "Code" / "User" / "settings.json"
+        elif system == "windows":
+            config_path = Path.home() / "AppData" / "Roaming" / "Code" / "User" / "settings.json"
+        else:  # Linux
+            config_path = Path.home() / ".config" / "Code" / "User" / "settings.json"
+        
+        # Check if VS Code is available by looking for the command or config file
         import shutil
         vscode_available = (
             shutil.which("code") is not None or
             shutil.which("code-insiders") is not None or
-            config_path.exists()
+            config_path.exists() or
+            Path("/Applications/Visual Studio Code.app").exists()  # macOS check
         )
         
         if vscode_available:
             return ClientConfig(
                 client_type=ClientType.VSCODE,
+                config_path=config_path,
+                is_available=True
+            )
+        
+        return None
+    
+    def _discover_gemini_cli(self) -> Optional[ClientConfig]:
+        """Discover Gemini CLI configuration."""
+        # Check both global and local settings paths as per official docs
+        global_config = Path.home() / ".gemini" / "settings.json"
+        local_config = Path.cwd() / ".gemini" / "settings.json"
+        
+        # Prefer local over global if both exist
+        config_path = local_config if local_config.exists() else global_config
+        
+        # Check if gemini-cli is available by looking for the command
+        import shutil
+        gemini_available = (
+            shutil.which("gemini") is not None or
+            config_path.exists() or
+            config_path.parent.exists()
+        )
+        
+        if gemini_available:
+            return ClientConfig(
+                client_type=ClientType.GEMINI_CLI,
                 config_path=config_path,
                 is_available=True
             )
