@@ -1,0 +1,62 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/user/Documents"],
+      "env": {},
+      "trust": true,
+      "cwd": "./file-server",
+      "timeout": 30000
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "$BRAVE_API_KEY"
+      },
+      "trust": true,
+      "timeout": 15000
+    },
+    "postgres": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "--network", "host",
+        "mcp/postgres",
+        "postgresql://user:password@localhost:5432/mydb"
+      ],
+      "env": {
+        "DATABASE_URL": "$DB_CONNECTION_STRING"
+      },
+      "trust": false,
+      "timeout": 60000
+    },
+    "python-tools": {
+      "command": "python",
+      "args": ["-m", "mcp_server_python"],
+      "env": {
+        "PYTHONPATH": "/usr/local/lib/python3.12/site-packages"
+      },
+      "cwd": "./python-tools",
+      "trust": true,
+      "timeout": 45000
+    },
+    "git-tools": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "/path/to/repo"],
+      "env": {},
+      "cwd": "/path/to/repo",
+      "trust": true,
+      "timeout": 20000
+    },
+    "web-api-server": {
+      "httpUrl": "http://localhost:3000/mcp",
+      "timeout": 5000,
+      "trust": false
+    }
+  },
+  "theme": "GitHub",
+  "sandbox": false,
+  "usageStatisticsEnabled": true,
+  "contextFileName": "GEMINI.md"
+}

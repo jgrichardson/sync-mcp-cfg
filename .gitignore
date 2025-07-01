@@ -26,6 +26,26 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Personal configurations and sensitive data (NEVER commit these)
+**/settings.json
+**/*_config.json
+**/claude_desktop_config.json
+**/.claude.json
+**/.cursor/
+**/.gemini/
+**/Library/Application Support/Code/User/settings.json
+
+# API Keys and sensitive data
+*.key
+*.pem
+*.env.local
+*.env.production
+config/personal/
+secrets/
+credentials/
+test_configs/
+personal_examples/
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
