@@ -23,23 +23,23 @@ def temp_config_file():
                     'env': {'TEST_VAR': 'test_value'},
                     'trust': True,
                     'cwd': './test-dir',
-                    'timeout': 30000
+                    'timeout': 30000,
                 },
                 'disabled-server': {
                     'command': 'node',
                     'args': ['server.js'],
                     'env': {},
                     'trust': False,
-                    'timeout': 15000
-                }
+                    'timeout': 15000,
+                },
             },
-            'theme': 'Default'
+            'theme': 'Default',
         }
         json.dump(config_data, f, indent=2)
         temp_path = Path(f.name)
-    
+
     yield temp_path
-    
+
     # Cleanup
     if temp_path.exists():
         temp_path.unlink()
@@ -51,7 +51,7 @@ def gemini_handler(temp_config_file):
     config = ClientConfig(
         client_type=ClientType.GEMINI_CLI,
         config_path=temp_config_file,
-        is_available=True
+        is_available=True,
     )
     return GeminiCLIHandler(config)
 
@@ -59,9 +59,9 @@ def gemini_handler(temp_config_file):
 def test_load_servers(gemini_handler):
     """Test loading servers from Gemini CLI configuration."""
     servers = gemini_handler.load_servers()
-    
+
     assert len(servers) == 2
-    
+
     test_server = next(s for s in servers if s.name == 'test-server')
     assert test_server.command == 'python'
     assert test_server.args == ['-m', 'test_server']
@@ -69,7 +69,7 @@ def test_load_servers(gemini_handler):
     assert test_server.server_type == MCPServerType.STDIO
     assert test_server.enabled is True
     assert 'timeout: 30000ms, cwd: ./test-dir' in test_server.description
-    
+
     disabled_server = next(s for s in servers if s.name == 'disabled-server')
     assert disabled_server.enabled is False
 
@@ -84,15 +84,15 @@ def test_save_servers(gemini_handler):
         server_type=MCPServerType.HTTP,
         url='http://localhost:8000',
         enabled=True,
-        description='New test server'
+        description='New test server',
     )
-    
+
     gemini_handler.save_servers([new_server])
-    
+
     # Reload and verify
     servers = gemini_handler.load_servers()
     assert len(servers) == 1
-    
+
     saved_server = servers[0]
     assert saved_server.name == 'new-server'
     assert saved_server.command == 'python3'
@@ -109,14 +109,14 @@ def test_add_server(gemini_handler):
         args=['added.js'],
         env={},
         server_type=MCPServerType.STDIO,
-        enabled=True
+        enabled=True,
     )
-    
+
     gemini_handler.add_server(new_server)
-    
+
     servers = gemini_handler.load_servers()
     assert len(servers) == 3  # 2 original + 1 new
-    
+
     added_server = next(s for s in servers if s.name == 'added-server')
     assert added_server.command == 'node'
 
@@ -125,11 +125,11 @@ def test_remove_server(gemini_handler):
     """Test removing a server."""
     result = gemini_handler.remove_server('test-server')
     assert result is True
-    
+
     servers = gemini_handler.load_servers()
     assert len(servers) == 1
     assert all(s.name != 'test-server' for s in servers)
-    
+
     # Try removing non-existent server
     result = gemini_handler.remove_server('non-existent')
     assert result is False
@@ -140,7 +140,7 @@ def test_get_server(gemini_handler):
     server = gemini_handler.get_server('test-server')
     assert server is not None
     assert server.name == 'test-server'
-    
+
     # Test non-existent server
     server = gemini_handler.get_server('non-existent')
     assert server is None
@@ -149,21 +149,19 @@ def test_get_server(gemini_handler):
 def test_validate_config(gemini_handler):
     """Test configuration validation."""
     assert gemini_handler.validate_config() is True
-    
+
     # Test with invalid config
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         f.write('invalid json')
         invalid_path = Path(f.name)
-    
+
     invalid_config = ClientConfig(
-        client_type=ClientType.GEMINI_CLI,
-        config_path=invalid_path,
-        is_available=True
+        client_type=ClientType.GEMINI_CLI, config_path=invalid_path, is_available=True
     )
     invalid_handler = GeminiCLIHandler(invalid_config)
-    
+
     assert invalid_handler.validate_config() is False
-    
+
     # Cleanup
     invalid_path.unlink()
 
@@ -173,7 +171,7 @@ def test_backup_and_restore(gemini_handler):
     # Create backup
     backup_path = gemini_handler.backup_config()
     assert backup_path.exists()
-    
+
     # Modify original config
     new_server = MCPServer(
         name='backup-test',
@@ -181,22 +179,22 @@ def test_backup_and_restore(gemini_handler):
         args=[],
         env={},
         server_type=MCPServerType.STDIO,
-        enabled=True
+        enabled=True,
     )
     gemini_handler.save_servers([new_server])
-    
+
     # Verify modification
     servers = gemini_handler.load_servers()
     assert len(servers) == 1
     assert servers[0].name == 'backup-test'
-    
+
     # Restore from backup
     gemini_handler.restore_config(backup_path)
-    
+
     # Verify restore
     servers = gemini_handler.load_servers()
     assert len(servers) == 2  # Original servers restored
-    
+
     # Cleanup
     backup_path.unlink()
 
@@ -214,7 +212,7 @@ def test_is_available(mock_which):
     # Test when gemini is available
     mock_which.return_value = '/usr/local/bin/gemini'
     assert GeminiCLIHandler.is_available() is True
-    
+
     # Test when gemini is not available
     mock_which.return_value = None
     assert GeminiCLIHandler.is_available() is False
@@ -224,19 +222,17 @@ def test_empty_config():
     """Test handling of empty/non-existent config."""
     with tempfile.NamedTemporaryFile(delete=True) as f:
         config_path = Path(f.name)
-    
+
     # Config file doesn't exist now
     config = ClientConfig(
-        client_type=ClientType.GEMINI_CLI,
-        config_path=config_path,
-        is_available=True
+        client_type=ClientType.GEMINI_CLI, config_path=config_path, is_available=True
     )
     handler = GeminiCLIHandler(config)
-    
+
     # Should return empty list for non-existent config
     servers = handler.load_servers()
     assert servers == []
-    
+
     # Should be able to save to non-existent config (creates it)
     new_server = MCPServer(
         name='first-server',
@@ -244,15 +240,15 @@ def test_empty_config():
         args=[],
         env={},
         server_type=MCPServerType.STDIO,
-        enabled=True
+        enabled=True,
     )
     handler.save_servers([new_server])
-    
+
     # Verify it was saved
     servers = handler.load_servers()
     assert len(servers) == 1
     assert servers[0].name == 'first-server'
-    
+
     # Cleanup
     if config_path.exists():
         config_path.unlink()

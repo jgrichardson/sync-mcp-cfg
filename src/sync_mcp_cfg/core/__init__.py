@@ -24,7 +24,7 @@ from .registry import ClientRegistry
 __all__ = [
     # Exceptions
     "SyncMCPError",
-    "ClientNotFoundError", 
+    "ClientNotFoundError",
     "ConfigurationError",
     "ValidationError",
     "BackupError",
