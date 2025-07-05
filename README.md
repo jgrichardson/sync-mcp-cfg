@@ -7,7 +7,7 @@ A powerful tool to manage and synchronize Model Context Protocol (MCP) server co
 
 ## 🚀 Features
 
-- **Multi-Client Support**: Manage MCP servers across Claude Code, Claude Desktop, Cursor, VS Code, and **Gemini CLI**
+- **Multi-Client Support**: Manage MCP servers across Claude Code, Claude Desktop, Cursor, VS Code, **Gemini CLI**, and **OpenCode**
 - **Easy Synchronization**: Sync server configurations between different clients with conflict resolution
 - **Backup & Restore**: Automatic backups before changes with restore capability
 - **Interactive CLI**: User-friendly command-line interface with rich output and progress indicators
@@ -23,7 +23,7 @@ A powerful tool to manage and synchronize Model Context Protocol (MCP) server co
 ### From Source (Current Method)
 
 ```bash
-git clone https://github.com/jgrichardson/sync-mcp-cfg.git
+git clone https://github.com/gilberth/sync-mcp-cfg.git
 cd sync-mcp-cfg
 pip install -e .
 ```
@@ -33,31 +33,33 @@ pip install -e .
 ### Requirements
 
 - Python 3.9 or higher
-- One or more supported MCP clients installed (Claude Code, Claude Desktop, Cursor, VS Code, or Gemini CLI)
+- One or more supported MCP clients installed (Claude Code, Claude Desktop, Cursor, VS Code, Gemini CLI, or OpenCode)
 
 ### Development Installation
 
 ```bash
-git clone https://github.com/jgrichardson/sync-mcp-cfg.git
+git clone https://github.com/gilberth/sync-mcp-cfg.git
 cd sync-mcp-cfg
 pip install -e ".[dev]"
 ```
 
 ## 🛠️ Supported Clients
 
-| Client | Status | Configuration Location |
-|--------|--------|------------------------|
-| **Claude Code CLI** | ✅ | `~/.claude.json` |
-| **Claude Desktop** | ✅ | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)<br>`%APPDATA%/Claude/claude_desktop_config.json` (Windows)<br>`~/.config/Claude/claude_desktop_config.json` (Linux) |
-| **Cursor** | ✅ | `~/.cursor/mcp.json` |
-| **VS Code Copilot** | ✅ | `~/Library/Application Support/Code/User/settings.json` (macOS)<br>`%APPDATA%/Code/User/settings.json` (Windows)<br>`~/.config/Code/User/settings.json` (Linux) |
-| **Gemini CLI** | ✅ | `~/.gemini/settings.json` (global)<br>`.gemini/settings.json` (local) |
+| Client              | Status | Configuration Location                                                                                                                                                                        |
+| ------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Claude Code CLI** | ✅     | `~/.claude.json`                                                                                                                                                                              |
+| **Claude Desktop**  | ✅     | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)<br>`%APPDATA%/Claude/claude_desktop_config.json` (Windows)<br>`~/.config/Claude/claude_desktop_config.json` (Linux) |
+| **Cursor**          | ✅     | `~/.cursor/mcp.json`                                                                                                                                                                          |
+| **VS Code Copilot** | ✅     | `~/Library/Application Support/Code/User/settings.json` (macOS)<br>`%APPDATA%/Code/User/settings.json` (Windows)<br>`~/.config/Code/User/settings.json` (Linux)                               |
+| **Gemini CLI**      | ✅     | `~/.gemini/settings.json` (global)<br>`.gemini/settings.json` (local)                                                                                                                         |
+| **OpenCode**        | ✅     | `~/.config/opencode/config.json` (global)<br>`./opencode.json` (project)                                                                                                                      |
 
 ## 🌟 Gemini CLI Support
 
 This tool now includes **complete support for Gemini CLI** with all its specific features:
 
 ### Key Features
+
 - **Auto-detection**: Automatically finds Gemini CLI configuration in global (`~/.gemini/settings.json`) or local (`.gemini/settings.json`) locations
 - **Trust control**: Supports the `trust` field for automatic tool execution approval
 - **Working directory**: Supports `cwd` field for stdio servers
@@ -82,6 +84,82 @@ sync-mcp-cfg add gemini-fs npx \
 ```
 
 For complete Gemini CLI documentation, see: [docs/gemini-cli-example.md](docs/gemini-cli-example.md)
+
+## 🔥 OpenCode Support
+
+This tool now includes **complete support for OpenCode** - the AI coding agent built for the terminal!
+
+### Key Features
+
+- **Auto-detection**: Automatically finds OpenCode configuration in global (`~/.config/opencode/config.json`) or project (`./opencode.json`) locations
+- **Local & Remote servers**: Full support for both stdio local servers and remote SSE/HTTP servers
+- **Native format**: Uses OpenCode's native configuration format with `type: "local"` and `type: "remote"`
+- **Schema validation**: Maintains proper `$schema` reference to OpenCode's configuration schema
+- **Environment variables**: Complete support for environment variable configuration in local servers
+- **Bidirectional sync**: Seamlessly sync servers TO and FROM OpenCode with all other clients
+
+### OpenCode Configuration Format
+
+OpenCode uses a unique configuration format that distinguishes between local and remote servers:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "filesystem": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/path"
+      ],
+      "environment": { "PATH_ROOT": "/workspace" },
+      "enabled": true
+    },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.ai/v1",
+      "enabled": true
+    }
+  }
+}
+```
+
+### OpenCode Specific Examples
+
+```bash
+# List only OpenCode servers
+sync-mcp-cfg list --client opencode
+
+# Sync from VS Code to OpenCode
+sync-mcp-cfg sync --from vscode --to opencode
+
+# Add local server specifically for OpenCode
+sync-mcp-cfg add opencode-fs npx \
+  -a "-y" -a "@modelcontextprotocol/server-filesystem" -a "/tmp" \
+  --clients opencode \
+  --description "Filesystem server for OpenCode"
+
+# Add remote SSE server to OpenCode
+sync-mcp-cfg add context7 "" \
+  --type sse --url "https://mcp.context7.ai/v1" \
+  --clients opencode \
+  --description "Context7 remote MCP server"
+
+# Sync FROM OpenCode to other clients
+sync-mcp-cfg sync --from opencode --to claude-desktop --to cursor
+```
+
+### OpenCode Server Types
+
+| sync-mcp-cfg Type | OpenCode Format                       | Use Case               |
+| ----------------- | ------------------------------------- | ---------------------- |
+| `stdio`           | `{"type": "local", "command": [...]}` | Local NPX/Node servers |
+| `sse`             | `{"type": "remote", "url": "..."}`    | Remote SSE endpoints   |
+| `http`            | `{"type": "remote", "url": "..."}`    | Remote HTTP endpoints  |
+
+**Note**: OpenCode doesn't distinguish between SSE and HTTP in configuration - both use `type: "remote"` with a URL. The protocol is determined by the endpoint.
 
 ## 🚀 Quick Start
 
@@ -141,15 +219,15 @@ sync-mcp-cfg list --detailed
 # Sync all servers from Claude Code to Cursor
 sync-mcp-cfg sync --from claude-code --to cursor
 
-# Sync between multiple clients including Gemini CLI
-sync-mcp-cfg sync --from claude-desktop --to gemini-cli --backup
+# Sync between multiple clients including Gemini CLI and OpenCode
+sync-mcp-cfg sync --from claude-desktop --to gemini-cli --to opencode --backup
 
 # Sync specific servers
-sync-mcp-cfg sync --from claude-desktop --to claude-code --to vscode --to gemini-cli \
+sync-mcp-cfg sync --from claude-desktop --to claude-code --to vscode --to gemini-cli --to opencode \
   --servers filesystem --servers weather-api
 
 # Dry run to see what would be synced
-sync-mcp-cfg sync --from cursor --to gemini-cli --dry-run
+sync-mcp-cfg sync --from cursor --to opencode --dry-run
 ```
 
 ### 6. Remove Servers
@@ -195,8 +273,8 @@ sync-mcp-cfg add gemini-filesystem npx \
 ### Batch Operations
 
 ```bash
-# Sync all servers from one client to multiple others including Gemini CLI
-sync-mcp-cfg sync --from claude-desktop --to claude-code --to cursor --to vscode --to gemini-cli
+# Sync all servers from one client to multiple others including Gemini CLI and OpenCode
+sync-mcp-cfg sync --from claude-desktop --to claude-code --to cursor --to vscode --to gemini-cli --to opencode
 
 # List servers in JSON format for scripting
 sync-mcp-cfg list --format json > mcp-servers.json
@@ -204,8 +282,8 @@ sync-mcp-cfg list --format json > mcp-servers.json
 # Add server to all available clients
 sync-mcp-cfg add universal-server npx -a "-y" -a "some-mcp-server"
 
-# Sync with backup and overwrite protection for Gemini CLI
-sync-mcp-cfg sync --from vscode --to gemini-cli --backup --overwrite
+# Sync with backup and overwrite protection for OpenCode
+sync-mcp-cfg sync --from vscode --to opencode --backup --overwrite
 ```
 
 ## 🎨 Text-based UI
@@ -217,6 +295,7 @@ sync-mcp-cfg tui
 ```
 
 The TUI provides:
+
 - Visual overview of all clients and servers
 - Interactive server addition and removal
 - Drag-and-drop style synchronization
@@ -227,6 +306,7 @@ The TUI provides:
 ### Global Configuration
 
 The tool stores its configuration in:
+
 - **Linux/macOS**: `~/.config/sync-mcp-cfg/config.json`
 - **Windows**: `%APPDATA%/sync-mcp-cfg/config.json`
 
@@ -265,6 +345,7 @@ sync-mcp-cfg restore --client claude-code --backup /path/to/backup.json
 - **Cursor**: `~/.cursor/backups/`
 - **VS Code**: Global settings backup with the settings.json file
 - **Gemini CLI**: `~/.gemini/backups/` (global) or `.gemini/backups/` (local)
+- **OpenCode**: `~/.config/opencode/backups/` (global) or `./backups/` (project)
 
 ## 🔌 Extending Support
 
@@ -287,7 +368,7 @@ class NewClientHandler(BaseClientHandler):
     def load_servers(self) -> List[MCPServer]:
         # Implementation for loading servers
         pass
-    
+
     def save_servers(self, servers: List[MCPServer]) -> None:
         # Implementation for saving servers
         pass
@@ -323,6 +404,7 @@ mkdocs serve
 ## Why This Tool?
 
 If you use multiple AI clients with MCP servers, this tool helps with:
+
 - Keeping server configurations synchronized across clients
 - Avoiding manual copy/paste errors when setting up servers
 - Creating backups before making changes
@@ -335,7 +417,7 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 ### Development Setup
 
 ```bash
-git clone https://github.com/jgrichardson/sync-mcp-cfg.git
+git clone https://github.com/gilberth/sync-mcp-cfg.git
 cd sync-mcp-cfg
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -373,9 +455,21 @@ For complete security guidelines, see: [SECURITY.md](SECURITY.md)
 - `tui`: Launch text-based UI
 
 For detailed command help:
+
 ```bash
 sync-mcp-cfg COMMAND --help
 ```
+
+## 🔒 Security & Privacy
+
+This tool is designed with security in mind:
+
+- **No sensitive data collection**: Personal credentials, API keys, and private paths are never included in the codebase
+- **Sanitized examples**: All documentation uses generic, non-personal example data
+- **Protected .gitignore**: Comprehensive exclusion patterns prevent accidental exposure of sensitive configuration files
+- **Backup safety**: Automatic backups are stored locally and never transmitted
+
+For complete security guidelines, see: [SECURITY.md](SECURITY.md)
 
 ## 🐛 Troubleshooting
 
@@ -395,6 +489,7 @@ sync-mcp-cfg --verbose COMMAND
 ### Log Files
 
 Logs are written to:
+
 - **Linux/macOS**: `~/.local/share/sync-mcp-cfg/logs/`
 - **Windows**: `%LOCALAPPDATA%/sync-mcp-cfg/logs/`
 
@@ -411,24 +506,25 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 🐛 [Report Bugs](https://github.com/jgrichardson/sync-mcp-cfg/issues)
-- 💡 [Request Features](https://github.com/jgrichardson/sync-mcp-cfg/issues)
-- 📖 [Documentation](https://github.com/jgrichardson/sync-mcp-cfg/wiki)
-- 💬 [Discussions](https://github.com/jgrichardson/sync-mcp-cfg/discussions)
+- 🐛 [Report Bugs](https://github.com/gilberth/sync-mcp-cfg/issues)
+- 💡 [Request Features](https://github.com/gilberth/sync-mcp-cfg/issues)
+- 📖 [Documentation](https://github.com/gilberth/sync-mcp-cfg/wiki)
+- 💬 [Discussions](https://github.com/gilberth/sync-mcp-cfg/discussions)
 
 ---
 
 ## 🆕 Recent Updates
 
-### Latest Release - Gemini CLI Support
+### Latest Release - OpenCode & Gemini CLI Support
 
 **🎉 Major Features Added:**
 
+- ✅ **Complete OpenCode Support**: Full integration with local/remote server support, auto-detection, and native configuration format
 - ✅ **Complete Gemini CLI Support**: Full integration with auto-detection, trust control, and timeout configuration
 - ✅ **Enhanced VSCode Support**: Now uses global settings.json for proper MCP configuration
 - ✅ **Security Hardening**: Protected against accidental exposure of sensitive data with comprehensive .gitignore
-- ✅ **Cross-Client Synchronization**: Seamless MCP server sharing between all supported clients
-- ✅ **Comprehensive Testing**: Full test coverage for all new features
+- ✅ **Cross-Client Synchronization**: Seamless MCP server sharing between all supported clients including OpenCode
+- ✅ **Comprehensive Testing**: Full test coverage for all new features including OpenCode
 - ✅ **Rich Documentation**: Detailed examples and usage guides for all clients
 
 **🔧 Technical Improvements:**
@@ -437,6 +533,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Automatic backup creation before all destructive operations
 - Enhanced error handling and validation
 - Improved client auto-detection across all platforms
-- Support for client-specific configuration fields (trust, cwd, timeout, httpUrl)
+- Support for client-specific configuration fields (trust, cwd, timeout, httpUrl, OpenCode's type/command structure)
+- OpenCode's unique local/remote server format with environment variable support
 
 **Made with ❤️ for the AI development community**

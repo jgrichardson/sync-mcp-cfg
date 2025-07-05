@@ -21,7 +21,7 @@ class TestMCPServer:
             args=["hello", "world"],
             env={"TEST": "value"},
         )
-        
+
         assert server.name == "test-server"
         assert server.command == "echo"
         assert server.args == ["hello", "world"]
@@ -38,7 +38,7 @@ class TestMCPServer:
             server_type=MCPServerType.SSE,
             url="http://localhost:3000/sse",
         )
-        
+
         assert server.server_type == MCPServerType.SSE
         assert server.url == "http://localhost:3000/sse"
 
@@ -92,12 +92,13 @@ class TestClientType:
         """Test all client types are available."""
         expected_types = {
             "claude-code",
-            "claude-desktop", 
+            "claude-desktop",
             "cursor",
             "vscode",
             "gemini-cli",
+            "opencode",
         }
-        
+
         actual_types = {ct.value for ct in ClientType}
         assert actual_types == expected_types
 
@@ -105,7 +106,7 @@ class TestClientType:
         """Test creating client type from string."""
         assert ClientType("claude-code") == ClientType.CLAUDE_CODE
         assert ClientType("cursor") == ClientType.CURSOR
-        
+
         with pytest.raises(ValueError):
             ClientType("invalid-client")
 

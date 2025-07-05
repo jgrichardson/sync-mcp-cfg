@@ -69,7 +69,7 @@ def claude_code_config_data():
                 "env": {},
             },
             "weather": {
-                "command": "node", 
+                "command": "node",
                 "args": ["/path/to/weather.js"],
                 "env": {"API_KEY": "secret"},
             },
@@ -105,7 +105,7 @@ def cursor_config_data():
             },
             {
                 "name": "weather",
-                "type": "command", 
+                "type": "command",
                 "command": "node /path/to/weather.js",
                 "enabled": True,
             },
@@ -190,7 +190,7 @@ def mock_registry():
         ),
         ClientConfig(
             client_type=ClientType.CURSOR,
-            config_path=Path("/mock/cursor.json"), 
+            config_path=Path("/mock/cursor.json"),
             is_available=True,
         ),
     ]

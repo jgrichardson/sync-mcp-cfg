@@ -8,7 +8,7 @@ from .sync import sync_command, sync_interactive
 __all__ = [
     "add_command",
     "add_interactive",
-    "remove_command", 
+    "remove_command",
     "remove_interactive",
     "list_command",
     "list_detailed",
